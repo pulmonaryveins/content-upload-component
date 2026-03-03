@@ -1,12 +1,15 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+import { ContentUploadComponent } from './content-upload/content-upload.component';
+import type { OnUploadPayload } from './content-upload/content-upload.types';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [ContentUploadComponent],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.scss',
 })
 export class App {
-  protected readonly title = signal('content-upload-component');
+  handleUpload(payload: OnUploadPayload): void {
+    console.log('Upload event:', payload.status, payload.data);
+  }
 }

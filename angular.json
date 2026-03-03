@@ -8,7 +8,9 @@
   "projects": {
     "content-upload-component": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": { "style": "scss" }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -18,6 +20,14 @@
           "options": {
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
+            "allowedCommonJsDependencies": [
+              "@transloadit/prettier-bytes",
+              "mime-match",
+              "lodash",
+              "namespace-emitter",
+              "component-emitter",
+              "url-parse"
+            ],
             "assets": [
               {
                 "glob": "**/*",
@@ -30,6 +40,12 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.production.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -38,8 +54,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "16kB",
+                  "maximumError": "24kB"
                 }
               ],
               "outputHashing": "all"
