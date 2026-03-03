@@ -35,6 +35,11 @@ $radius-full: 9999px;
 
 $transition-base: 150ms ease;
 
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 // ── Root ─────────────────────────────────────────────────────────────────────
 .content-upload {
   position: relative;
@@ -320,6 +325,8 @@ $transition-base: 150ms ease;
     aspect-ratio: 4 / 3;
     background: $color-gray-100;
     overflow: hidden;
+
+    video { background: $color-gray-800; }
   }
 
   &__card-img {
@@ -327,6 +334,9 @@ $transition-base: 150ms ease;
     height: 100%;
     object-fit: cover;
     display: block;
+    transition: transform 250ms ease;
+
+    .content-upload__card:hover & { transform: scale(1.03); }
   }
 
   &__progress-overlay {
@@ -426,18 +436,19 @@ $transition-base: 150ms ease;
 
   // ── Rename Panel ──────────────────────────────────────────────────────────
   &__rename-panel {
-    border-top: 1px solid $color-green-primary;
-    padding: 12px;
-    background: #fff;
-    border-radius: 0 0 $radius-md $radius-md;
+    border-top: 2px solid $color-green-primary;
+    padding: 12px 14px 14px;
+    background: #fafffe;
+    animation: slideDown 160ms ease both;
 
     &--list {
       border-top: none;
-      border: 1px solid $color-green-primary;
+      border: 2px solid $color-green-primary;
       border-radius: $radius-md;
       margin-top: 8px;
       grid-column: 1 / -1;
       width: 100%;
+      background: #fafffe;
     }
   }
 
@@ -445,9 +456,10 @@ $transition-base: 150ms ease;
     display: block;
     font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     color: $color-green-dark;
     margin-bottom: 8px;
+    text-transform: uppercase;
   }
 
   &__rename-row {
@@ -458,16 +470,20 @@ $transition-base: 150ms ease;
 
   &__rename-input {
     flex: 1;
-    border: 1px solid $color-gray-300;
+    border: 1.5px solid $color-gray-300;
     border-radius: $radius-sm;
-    padding: 6px 10px;
+    padding: 7px 10px;
     font-size: 13px;
     color: $color-gray-900;
+    background: #fff;
     outline: none;
-    transition: border-color $transition-base;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
     min-width: 0;
 
-    &:focus { border-color: $color-green-primary; }
+    &:focus {
+      border-color: $color-green-primary;
+      box-shadow: 0 0 0 3px rgba(101, 163, 13, 0.12);
+    }
   }
 
   // ── List View ─────────────────────────────────────────────────────────────
@@ -516,6 +532,24 @@ $transition-base: 150ms ease;
     align-items: center;
     justify-content: center;
     color: $color-gray-400;
+  }
+
+  &__list-video-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+
+    video { display: block; background: $color-gray-800; }
+  }
+
+  &__list-play-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    pointer-events: none;
   }
 
   &__list-info {

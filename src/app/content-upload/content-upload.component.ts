@@ -6,6 +6,7 @@ import {
   OnInit,
   computed,
   inject,
+  input,
   output,
   signal,
 } from '@angular/core';
@@ -17,7 +18,6 @@ import { environment } from '../../environments/environment';
 import { DROPZONE_BADGE_LABELS, FILE_INPUT_ACCEPT } from './content-upload.constants';
 import type {
   DuplicateInfo,
-  LibraryItem,
   OnUploadPayload,
   TransloaditAssembly,
   UploadFile,
@@ -46,8 +46,12 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
   // ── Services ────────────────────────────────────────────────────────────
   private readonly ngZone = inject(NgZone);
 
+  // ── Input ────────────────────────────────────────────────────────────────
+  readonly existingLibraryNames = input<string[]>([]);
+
   // ── Output ───────────────────────────────────────────────────────────────
   readonly onUpload = output<OnUploadPayload>();
+  readonly closeRequest = output<void>();
 
   // ── Uppy (imperative lifecycle, not a signal) ────────────────────────────
   private uppy!: Uppy;
@@ -62,7 +66,6 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
   readonly renameInputValue = signal<string>('');
   readonly uploadStatus = signal<UploadStatus>('idle');
   readonly showSuccessModal = signal<boolean>(false);
-  readonly libraryItems = signal<LibraryItem[]>([]);
 
   // ── Computed Signals ─────────────────────────────────────────────────────
   readonly hasUnresolvedDuplicates = computed(() =>
@@ -152,8 +155,6 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
         this.ngZone.run(() => {
           this.uploadStatus.set('complete');
           this.showSuccessModal.set(true);
-          const newItems = this.buildLibraryItems(assembly as TransloaditAssembly);
-          this.libraryItems.update((items) => [...items, ...newItems]);
           this.onUpload.emit({ status: 'uploaded', data: assembly as TransloaditAssembly });
         });
       });
@@ -229,8 +230,7 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
   }
 
   private refreshDuplicates(): void {
-    const libraryTitles = this.libraryItems().map((i) => i.name);
-    this.duplicates.set(detectDuplicates(this.selectedFiles(), libraryTitles));
+    this.duplicates.set(detectDuplicates(this.selectedFiles(), this.existingLibraryNames()));
   }
 
   // ── File Actions ─────────────────────────────────────────────────────────
@@ -346,23 +346,4 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
     this.viewMode.set(mode);
   }
 
-  // ── Library Builder ──────────────────────────────────────────────────────
-  private buildLibraryItems(assembly: TransloaditAssembly): LibraryItem[] {
-    const items: LibraryItem[] = [];
-    const allResults = Object.values(assembly.results).flat();
-
-    for (const result of allResults) {
-      items.push({
-        id: result.id,
-        name: result.basename,
-        typeLabel: getMimeLabel(result.mime),
-        thumbnailUrl: result.ssl_url,
-        formattedSize: formatFileSize(result.size),
-        uploadedAt: new Date(),
-        url: result.ssl_url,
-      });
-    }
-
-    return items;
-  }
 }
