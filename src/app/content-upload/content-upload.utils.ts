@@ -118,16 +118,20 @@ export function detectDuplicates(
   return duplicates;
 }
 
+/**
+ * Generates a unique name using the standard incremental suffix: name(1), name(2), ...
+ * Matches Channels Filename Validation: e.g. test.png, test(1).png, test(2).png
+ */
 function generateUniqueName(
   name: string,
   existing: Set<string>,
   batchSeen: Map<string, string>
 ): string {
   let counter = 1;
-  let candidate = `${name}-${counter}`;
+  let candidate = `${name}(${counter})`;
   while (existing.has(candidate.toLowerCase()) || batchSeen.has(candidate.toLowerCase())) {
     counter++;
-    candidate = `${name}-${counter}`;
+    candidate = `${name}(${counter})`;
   }
   return candidate;
 }

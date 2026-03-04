@@ -40,6 +40,15 @@ $transition-base: 150ms ease;
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes uploadOverlayFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 // ── Root ─────────────────────────────────────────────────────────────────────
 .content-upload {
   position: relative;
@@ -48,11 +57,14 @@ $transition-base: 150ms ease;
   padding: 24px;
   width: 100%;
   max-width: 700px;
+  max-height: calc(100vh - 96px);
   margin: 0 auto;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
 
   // ── Header ────────────────────────────────────────────────────────────────
   &__header {
@@ -239,6 +251,15 @@ $transition-base: 150ms ease;
     &:hover { opacity: 1; }
   }
 
+  // ── Consolidated Suggestion ───────────────────────────────────────────────
+  &__suggestion-separator {
+    margin: 0 4px;
+
+    &::after {
+      content: ' ';
+    }
+  }
+
   // ── Files Section Header ──────────────────────────────────────────────────
   &__files-header {
     display: flex;
@@ -296,11 +317,35 @@ $transition-base: 150ms ease;
     margin-left: 4px;
   }
 
-  // ── Grid View ─────────────────────────────────────────────────────────────
+  // ── Selected files layout (makes grid/list the scroll region) ────────────
+  &__files-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  // ── Grid View (scrolls internally when tall) ─────────────────────────────
   &__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    // Fixed-size cards: prevents "resizing" as more files appear.
+    // The grid will add/remove columns based on available width, but card width stays stable.
+    grid-template-columns: repeat(auto-fill, 200px);
+    justify-content: start;
     gap: 12px;
+    flex: 1;
+    min-height: 0;
+    max-height: 360px;
+    overflow-y: scroll; // always show vertical scrollbar when this section is present
+    padding: 2px 6px 2px 2px;
+    scrollbar-gutter: stable;
+  }
+
+  @media (max-width: 520px) {
+    &__grid {
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
   }
 
   &__card {
@@ -402,22 +447,40 @@ $transition-base: 150ms ease;
     &--duplicate { background: $color-yellow-bg; }
   }
 
+  &__card-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+    min-width: 0;
+  }
+
   &__card-name {
     font-size: 12px;
     font-weight: 500;
     color: $color-gray-800;
-    margin: 0 0 2px;
+    margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  &__renamed-badge--card {
+    flex-shrink: 0;
+    font-size: 9px;
+  }
+
+  &__card-type-size {
+    font-size: 11px;
+    color: $color-gray-500;
   }
 
   &__card-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 11px;
-    color: $color-gray-500;
+    gap: 6px;
   }
 
   &__card-chevron {
@@ -434,46 +497,43 @@ $transition-base: 150ms ease;
     &:hover { color: $color-gray-700; }
   }
 
-  // ── Rename Panel ──────────────────────────────────────────────────────────
+  // ── Rename Panel (standalone: below grid/list, not inside a card) ───────────
   &__rename-panel {
-    border-top: 2px solid $color-green-primary;
-    padding: 12px 14px 14px;
-    background: #fafffe;
     animation: slideDown 160ms ease both;
 
-    &--list {
-      border-top: none;
+    &--standalone {
+      margin-top: 12px;
+      padding: 12px 14px;
       border: 2px solid $color-green-primary;
       border-radius: $radius-md;
-      margin-top: 8px;
-      grid-column: 1 / -1;
-      width: 100%;
       background: #fafffe;
+      width: 100%;
+      box-sizing: border-box;
     }
   }
 
   &__rename-label {
     display: block;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: 0.1em;
     color: $color-green-dark;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     text-transform: uppercase;
   }
 
   &__rename-row {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
   }
 
   &__rename-input {
     flex: 1;
-    border: 1.5px solid $color-gray-300;
+    border: 2px solid $color-gray-300;
     border-radius: $radius-sm;
-    padding: 7px 10px;
-    font-size: 13px;
+    padding: 6px 10px;
+    font-size: 12px;
     color: $color-gray-900;
     background: #fff;
     outline: none;
@@ -482,15 +542,47 @@ $transition-base: 150ms ease;
 
     &:focus {
       border-color: $color-green-primary;
-      box-shadow: 0 0 0 3px rgba(101, 163, 13, 0.12);
+      box-shadow: 0 0 0 3px rgba(101, 163, 13, 0.15);
     }
   }
 
-  // ── List View ─────────────────────────────────────────────────────────────
+  // ── List View (scrolls internally when tall) ─────────────────────────────
   &__list {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    flex: 1;
+    min-height: 0;
+    max-height: 360px;
+    overflow-y: scroll; // always show vertical scrollbar when this section is present
+    padding: 2px 6px 2px 2px;
+    scrollbar-gutter: stable;
+  }
+
+  // ── Clean scrollbars (WebKit) ────────────────────────────────────────────
+  &__grid::-webkit-scrollbar,
+  &__list::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  &__grid::-webkit-scrollbar-track,
+  &__list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &__grid::-webkit-scrollbar-thumb,
+  &__list::-webkit-scrollbar-thumb {
+    background: rgba(17, 24, 39, 0.18);
+    border-radius: $radius-full;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
+  &__grid:hover::-webkit-scrollbar-thumb,
+  &__list:hover::-webkit-scrollbar-thumb {
+    background: rgba(17, 24, 39, 0.28);
+    border: 3px solid transparent;
+    background-clip: content-box;
   }
 
   &__list-item {
@@ -557,11 +649,20 @@ $transition-base: 150ms ease;
     min-width: 0;
   }
 
+  &__list-duplicate-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-yellow-text;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
   &__list-name-row {
     display: flex;
     align-items: center;
     gap: 6px;
     margin-bottom: 3px;
+    flex-wrap: wrap;
   }
 
   &__list-name {
@@ -606,6 +707,17 @@ $transition-base: 150ms ease;
     font-size: 12px;
     font-weight: 600;
     color: $color-green-dark;
+  }
+
+  &__list-status {
+    font-size: 11px;
+    color: $color-gray-400;
+    flex-shrink: 0;
+
+    &--progress {
+      color: $color-green-dark;
+      font-weight: 600;
+    }
   }
 
   &__list-actions {
@@ -673,6 +785,49 @@ $transition-base: 150ms ease;
     &--full { width: 100%; }
   }
 
+  // ── Upload loading overlay & button spinner ──────────────────────────────
+  &__upload-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: $radius-lg;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 10;
+    animation: uploadOverlayFade 200ms ease both;
+  }
+
+  &__upload-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid $color-gray-200;
+    border-top-color: $color-green-primary;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  &__upload-overlay-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: $color-gray-700;
+    margin: 0;
+  }
+
+  &__btn-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
   // ── Footer ────────────────────────────────────────────────────────────────
   &__footer {
     display: flex;
@@ -680,17 +835,23 @@ $transition-base: 150ms ease;
     align-items: center;
     gap: 10px;
     padding-top: 4px;
+    margin-top: auto;
   }
 
   // ── Success Modal ─────────────────────────────────────────────────────────
-  &__modal-backdrop {
+  &__modal-container {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 50;
+    pointer-events: none;
+    padding: 20px;
+
+    .content-upload__modal {
+      pointer-events: auto;
+    }
   }
 
   &__modal {
@@ -698,8 +859,9 @@ $transition-base: 150ms ease;
     border-radius: $radius-lg;
     padding: 40px 32px;
     text-align: center;
-    width: 340px;
-    max-width: calc(100vw - 40px);
+    width: 100%;
+    max-width: 340px;
+    height: auto;
     display: flex;
     flex-direction: column;
     align-items: center;

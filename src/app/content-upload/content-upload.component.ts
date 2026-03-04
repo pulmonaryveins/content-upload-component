@@ -4,6 +4,7 @@ import {
   NgZone,
   OnDestroy,
   OnInit,
+  ViewChild,
   computed,
   inject,
   input,
@@ -46,6 +47,9 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
   // ── Services ────────────────────────────────────────────────────────────
   private readonly ngZone = inject(NgZone);
 
+  // ── Template References ──────────────────────────────────────────────────
+  @ViewChild('renamePanel') renamePanel?: { nativeElement: HTMLElement };
+
   // ── Input ────────────────────────────────────────────────────────────────
   readonly existingLibraryNames = input<string[]>([]);
 
@@ -78,6 +82,10 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
 
   readonly unresolvedDuplicates = computed(() =>
     this.duplicates().filter((d) => !d.resolved)
+  );
+
+  readonly firstUnresolvedDuplicate = computed(() =>
+    this.unresolvedDuplicates()[0]
   );
 
   readonly isUploadDisabled = computed(
@@ -199,10 +207,25 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
 
   // ── File Processing Pipeline ─────────────────────────────────────────────
   private processFiles(files: File[]): void {
+    const maxFiles = 10;
+    const currentFileCount = this.selectedFiles().length;
+    const remainingSlots = Math.max(0, maxFiles - currentFileCount);
+    
+    if (remainingSlots === 0) {
+      this.validationErrors.set([{
+        fileId: '',
+        filename: '',
+        type: 'file-too-large',
+        message: `Maximum ${maxFiles} files allowed. Please remove some files to add more.`
+      }]);
+      return;
+    }
+
+    const filesToProcess = files.slice(0, remainingSlots);
     const newErrors: ValidationError[] = [];
     const newUploadFiles: UploadFile[] = [];
 
-    for (const file of files) {
+    for (const file of filesToProcess) {
       const id = crypto.randomUUID();
       const error = validateFile(file);
 
@@ -252,6 +275,13 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
     if (!file) return;
     this.renamingFileId.set(fileId);
     this.renameInputValue.set(file.name);
+    
+    // Scroll to rename panel after next render
+    setTimeout(() => {
+      this.renamePanel?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const input = this.renamePanel?.nativeElement.querySelector('.content-upload__rename-input') as HTMLInputElement;
+      input?.focus();
+    }, 0);
   }
 
   saveRename(): void {

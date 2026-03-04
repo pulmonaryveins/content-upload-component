@@ -46,7 +46,7 @@ export interface DuplicateInfo {
   fileId: string;
   /** The current name that conflicts */
   currentName: string;
-  /** Suggested non-conflicting name e.g. "photo-1" */
+  /** Suggested non-conflicting name e.g. "photo(1)" per Channels Filename Validation */
   suggestedName: string;
   /** Whether user has resolved this duplicate */
   resolved: boolean;
