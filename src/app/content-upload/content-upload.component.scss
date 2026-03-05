@@ -66,13 +66,6 @@ $transition-base: 150ms ease;
   gap: 16px;
   overflow: hidden;
 
-  // Lock to 90vh only when 2+ rows of cards exist (6th card = row 2 in 5-col grid)
-  // so __files-body flex:1 has a defined height to fill and the grid can scroll internally.
-  // For 1–5 files the modal stays auto-height and shrinks to content.
-  &:has(.content-upload__files-body .content-upload__card:nth-child(6)) {
-    height: 90vh;
-  }
-
   // ── Header ────────────────────────────────────────────────────────────────
   &__header {
     display: flex;
@@ -411,6 +404,11 @@ $transition-base: 150ms ease;
       border-color: $color-yellow-border;
       background: $color-yellow-bg;
     }
+
+    &--renaming {
+      border-color: $color-green-primary;
+      background: $color-green-light;
+    }
   }
 
   &__card-thumb {
@@ -458,12 +456,15 @@ $transition-base: 150ms ease;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(234, 179, 8, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: rgba(234, 179, 8, 0.92);
     color: $color-yellow-text;
     font-size: 10px;
     font-weight: 600;
     padding: 4px 8px;
-    text-align: center;
     border: none;
     cursor: pointer;
     transition: background $transition-base;
@@ -601,8 +602,8 @@ $transition-base: 150ms ease;
 
   // ── List View (scrolls internally when tall) ─────────────────────────────
   &__list {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
     padding: 2px 4px 8px 2px;
   }
@@ -642,6 +643,11 @@ $transition-base: 150ms ease;
     &--duplicate {
       border-color: $color-yellow-border;
       background: $color-yellow-bg;
+    }
+
+    &--renaming {
+      border-color: $color-green-primary;
+      background: $color-green-light;
     }
   }
 
@@ -693,12 +699,24 @@ $transition-base: 150ms ease;
     min-width: 0;
   }
 
-  &__list-duplicate-label {
-    font-size: 11px;
-    font-weight: 600;
+  &__list-dup-bar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 3px 10px;
+    background: $color-yellow-bg;
+    border: 1px solid rgba(234, 179, 8, 0.4);
+    border-radius: $radius-full;
     color: $color-yellow-text;
-    flex-shrink: 0;
-    white-space: nowrap;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background $transition-base;
+
+    &:hover { background: #fef9c3; }
   }
 
   &__list-name-row {
@@ -780,6 +798,58 @@ $transition-base: 150ms ease;
     border-radius: $radius-sm;
     display: flex;
     align-items: center;
+    transition: color $transition-base;
+
+    &:hover { color: $color-gray-700; }
+  }
+
+  // ── List Inline Rename ────────────────────────────────────────────────────
+  &__list-rename-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 3px;
+  }
+
+  &__list-rename-input {
+    flex: 1;
+    min-width: 0;
+    border: 1.5px solid $color-green-primary;
+    border-radius: $radius-sm;
+    padding: 3px 7px;
+    font-size: 12px;
+    color: $color-gray-900;
+    background: #fff;
+    outline: none;
+
+    &:focus { box-shadow: 0 0 0 2px rgba(101, 163, 13, 0.15); }
+  }
+
+  &__list-confirm-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 3px;
+    display: flex;
+    align-items: center;
+    border-radius: $radius-sm;
+    flex-shrink: 0;
+    color: $color-green-primary;
+    transition: color $transition-base;
+
+    &:hover { color: $color-green-dark; }
+  }
+
+  &__list-cancel-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 3px;
+    display: flex;
+    align-items: center;
+    border-radius: $radius-sm;
+    flex-shrink: 0;
+    color: $color-gray-400;
     transition: color $transition-base;
 
     &:hover { color: $color-gray-700; }

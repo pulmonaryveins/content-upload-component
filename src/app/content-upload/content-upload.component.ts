@@ -59,6 +59,8 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
 
   // ── Uppy (imperative lifecycle, not a signal) ────────────────────────────
   private uppy!: Uppy;
+  private currentAssemblyUrl: string | null = null;
+  private pollInterval: ReturnType<typeof setInterval> | null = null;
 
   // ── State Signals ────────────────────────────────────────────────────────
   readonly selectedFiles = signal<UploadFile[]>([]);
@@ -115,6 +117,7 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.clearPolling();
     this.selectedFiles().forEach((f) => {
       if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
     });
@@ -138,8 +141,12 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
             template_id: environment.transloaditTemplateId,
           },
         },
-        waitForEncoding: true,
+        waitForEncoding: false,
         alwaysRunAssembly: false,
+      });
+
+      this.uppy.on('transloadit:assembly-created', (assembly) => {
+        this.currentAssemblyUrl = (assembly as { assembly_ssl_url: string }).assembly_ssl_url;
       });
 
       this.uppy.on('upload-progress', (file, progress) => {
@@ -155,17 +162,18 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
 
       this.uppy.on('upload-error', (_file, error) => {
         this.ngZone.run(() => {
+          this.clearPolling();
           this.uploadStatus.set('error');
           console.error('Upload error:', error);
         });
       });
 
-      this.uppy.on('transloadit:complete', (assembly) => {
-        this.ngZone.run(() => {
-          this.uploadStatus.set('complete');
-          this.showSuccessModal.set(true);
-          this.onUpload.emit({ status: 'uploaded', data: assembly as TransloaditAssembly });
-        });
+      this.uppy.on('complete', (result) => {
+        if ((result.failed?.length ?? 0) > 0) return;
+        const assemblyUrl = this.currentAssemblyUrl;
+        if (assemblyUrl) {
+          this.startPolling(assemblyUrl);
+        }
       });
     });
   }
@@ -343,12 +351,49 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
     return this.selectedFiles().find((f) => f.id === fileId)?.renamed ?? false;
   }
 
+  // ── Assembly Polling ─────────────────────────────────────────────────────
+  private startPolling(assemblyUrl: string): void {
+    this.clearPolling();
+    this.pollInterval = setInterval(() => {
+      fetch(assemblyUrl)
+        .then((res) => res.json())
+        .then((data: { ok: string; error?: string }) => {
+          if (data.ok === 'ASSEMBLY_COMPLETED' || data.ok === 'ASSEMBLY_COMPLETE') {
+            this.clearPolling();
+            this.ngZone.run(() => {
+              this.uploadStatus.set('complete');
+              this.showSuccessModal.set(true);
+              this.onUpload.emit({ status: 'uploaded', data: data as TransloaditAssembly });
+            });
+          } else if (data.error || data.ok === 'REQUEST_ABORTED' || data.ok === 'ASSEMBLY_ABORTED') {
+            this.clearPolling();
+            this.ngZone.run(() => {
+              this.uploadStatus.set('error');
+              console.error('Assembly error:', data);
+            });
+          }
+        })
+        .catch((err: unknown) => {
+          console.error('Assembly poll error:', err);
+        });
+    }, 1500);
+  }
+
+  private clearPolling(): void {
+    if (this.pollInterval !== null) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
+  }
+
   // ── Upload ───────────────────────────────────────────────────────────────
   startUpload(): void {
     if (this.isUploadDisabled()) return;
 
     this.uploadStatus.set('uploading');
     this.onUpload.emit({ status: 'uploading', data: null });
+    this.currentAssemblyUrl = null;
+    this.clearPolling();
 
     this.uppy.cancelAll();
 
@@ -375,6 +420,7 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
     this.duplicates.set([]);
     this.validationErrors.set([]);
     this.uploadStatus.set('idle');
+    this.currentAssemblyUrl = null;
   }
 
   setViewMode(mode: ViewMode): void {

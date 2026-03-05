@@ -184,6 +184,7 @@
               <div
                 class="content-upload__card"
                 [class.content-upload__card--duplicate]="isDuplicate(file.id)"
+                [class.content-upload__card--renaming]="renamingFileId() === file.id"
               >
                 <!-- Thumbnail -->
                 <div class="content-upload__card-thumb">
@@ -219,7 +220,12 @@
                       type="button"
                       (click)="startRename(file.id)"
                     >
-                      ▲ Duplicate — click to rename
+                      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                        <path d="M5.5 1.5L10 9.5H1L5.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                        <path d="M5.5 5v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                        <circle cx="5.5" cy="8.5" r="0.5" fill="currentColor"/>
+                      </svg>
+                      Duplicate — click to rename
                     </button>
                   }
 
@@ -276,7 +282,24 @@
               <div
                 class="content-upload__list-item"
                 [class.content-upload__list-item--duplicate]="isDuplicate(file.id)"
+                [class.content-upload__list-item--renaming]="renamingFileId() === file.id"
               >
+                <!-- Duplicate label (list) -->
+                @if (isDuplicate(file.id)) {
+                  <button
+                    class="content-upload__list-dup-bar"
+                    type="button"
+                    (click)="startRename(file.id)"
+                  >
+                    <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                      <path d="M5.5 1.5L10 9.5H1L5.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                      <path d="M5.5 5v2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                      <circle cx="5.5" cy="8.5" r="0.5" fill="currentColor"/>
+                    </svg>
+                    Duplicate — click to rename
+                  </button>
+                }
+
                 <!-- Thumbnail -->
                 <div class="content-upload__list-thumb">
                   @if (file.file.type.startsWith('image/')) {
@@ -300,63 +323,95 @@
                   }
                 </div>
 
-                <!-- Duplicate label (list) -->
-                @if (isDuplicate(file.id)) {
-                  <span class="content-upload__list-duplicate-label">▲ Duplicate — click to rename</span>
-                }
-
                 <!-- Info -->
                 <div class="content-upload__list-info">
-                  <div class="content-upload__list-name-row">
-                    <span
-                      class="content-upload__list-name"
-                      [class.content-upload__list-name--duplicate]="isDuplicate(file.id)"
-                    >{{ file.name }}</span>
-                    @if (isRenamed(file.id)) {
-                      <span class="content-upload__renamed-badge">renamed</span>
-                    }
-                    @if (uploadStatus() === 'uploading' && file.progress !== null) {
-                      <span class="content-upload__list-status content-upload__list-status--progress">{{ file.progress }}%</span>
-                    } @else if (uploadStatus() === 'idle') {
-                      <span class="content-upload__list-status">pending</span>
-                    }
-                  </div>
+                  @if (renamingFileId() === file.id) {
+                    <div class="content-upload__list-rename-row">
+                      <input
+                        class="content-upload__list-rename-input"
+                        type="text"
+                        [ngModel]="renameInputValue()"
+                        (ngModelChange)="renameInputValue.set($event)"
+                        (keydown.enter)="saveRename()"
+                        (keydown.escape)="cancelRename()"
+                        placeholder="Enter new name"
+                        autofocus
+                      />
+                      <button
+                        class="content-upload__list-confirm-btn"
+                        type="button"
+                        (click)="saveRename()"
+                        aria-label="Confirm rename"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <path d="M2 7l4 4 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </button>
+                      <button
+                        class="content-upload__list-cancel-btn"
+                        type="button"
+                        (click)="cancelRename()"
+                        aria-label="Cancel rename"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="content-upload__list-name-row">
+                      <span
+                        class="content-upload__list-name"
+                        [class.content-upload__list-name--duplicate]="isDuplicate(file.id)"
+                      >{{ file.name }}</span>
+                      @if (isRenamed(file.id)) {
+                        <span class="content-upload__renamed-badge">renamed</span>
+                      }
+                      @if (uploadStatus() === 'uploading' && file.progress !== null) {
+                        <span class="content-upload__list-status content-upload__list-status--progress">{{ file.progress }}%</span>
+                      } @else if (uploadStatus() === 'idle') {
+                        <span class="content-upload__list-status">pending</span>
+                      }
+                    </div>
+                  }
                   <div class="content-upload__list-meta">
                     <span class="content-upload__type-chip">{{ file.typeLabel }}</span>
                     <span class="content-upload__list-size">{{ file.formattedSize }}</span>
                   </div>
                 </div>
 
-                <!-- Actions -->
-                <div class="content-upload__list-actions">
-                  <button
-                    class="content-upload__action-btn"
-                    type="button"
-                    (click)="startRename(file.id)"
-                    aria-label="Rename file"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                  <button
-                    class="content-upload__action-btn"
-                    type="button"
-                    (click)="removeFile(file.id)"
-                    aria-label="Remove file"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M11 3L3 11M3 3l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                  </button>
-                </div>
+                <!-- Actions (hidden while this card is being renamed) -->
+                @if (renamingFileId() !== file.id) {
+                  <div class="content-upload__list-actions">
+                    <button
+                      class="content-upload__action-btn"
+                      type="button"
+                      (click)="startRename(file.id)"
+                      aria-label="Rename file"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <button
+                      class="content-upload__action-btn"
+                      type="button"
+                      (click)="removeFile(file.id)"
+                      aria-label="Remove file"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M11 3L3 11M3 3l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                }
               </div>
             }
           </div>
         }
 
-        <!-- Standalone Rename Panel (shared for grid and list; not inside any card) -->
-        @if (renamingFileId()) {
+        <!-- Standalone Rename Panel (grid only) -->
+        @if (viewMode() === 'grid' && renamingFileId()) {
           <div #renamePanel class="content-upload__rename-panel content-upload__rename-panel--standalone">
             <label class="content-upload__rename-label">RENAME CONTENT</label>
             <div class="content-upload__rename-row">

@@ -1,8 +1,6 @@
 import {
   ALLOWED_MIME_TYPES,
   FILENAME_INVALID_CHARS_REGEX,
-  MAX_FILE_SIZE_IMAGE,
-  MAX_FILE_SIZE_VIDEO,
   MIME_TO_LABEL,
 } from './content-upload.constants';
 import type { DuplicateInfo, UploadFile, ValidationError } from './content-upload.types';
@@ -29,16 +27,6 @@ export function validateFile(file: File): Omit<ValidationError, 'fileId'> | null
       filename: file.name,
       type: 'special-chars',
       message: `File names cannot contain special characters including spaces and parenthesis`,
-    };
-  }
-
-  const isVideo = file.type.startsWith('video/');
-  const maxSize = isVideo ? MAX_FILE_SIZE_VIDEO : MAX_FILE_SIZE_IMAGE;
-  if (file.size > maxSize) {
-    return {
-      filename: file.name,
-      type: 'file-too-large',
-      message: `File ${file.name} exceeds the maximum size of ${formatFileSize(maxSize)}`,
     };
   }
 
