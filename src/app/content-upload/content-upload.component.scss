@@ -56,15 +56,22 @@ $transition-base: 150ms ease;
   border-radius: $radius-lg;
   padding: 24px;
   width: 100%;
-  max-width: 700px;
-  max-height: calc(100vh - 96px);
+  max-width: 960px;
+  height: auto;
+  max-height: 90vh;
   margin: 0 auto;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
   gap: 16px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
+
+  // Lock to 90vh only when 2+ rows of cards exist (6th card = row 2 in 5-col grid)
+  // so __files-body flex:1 has a defined height to fill and the grid can scroll internally.
+  // For 1–5 files the modal stays auto-height and shrinks to content.
+  &:has(.content-upload__files-body .content-upload__card:nth-child(6)) {
+    height: 90vh;
+  }
 
   // ── Header ────────────────────────────────────────────────────────────────
   &__header {
@@ -106,7 +113,7 @@ $transition-base: 150ms ease;
     border: 2px dashed $color-gray-300;
     border-radius: $radius-md;
     background: $color-gray-50;
-    padding: 32px 24px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -114,6 +121,7 @@ $transition-base: 150ms ease;
     cursor: pointer;
     transition: border-color $transition-base, background $transition-base;
     outline: none;
+    flex-shrink: 0;
 
     &:hover {
       border-color: $color-gray-400;
@@ -178,13 +186,14 @@ $transition-base: 150ms ease;
   // ── Banners ───────────────────────────────────────────────────────────────
   &__banner {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 10px;
-    padding: 10px 14px;
+    padding: 9px 14px;
     border-radius: $radius-md;
     border-width: 1px;
     border-style: solid;
     font-size: 13px;
+    flex-shrink: 0;
 
     &--error {
       background: $color-error-bg;
@@ -260,11 +269,58 @@ $transition-base: 150ms ease;
     }
   }
 
+  &__suggestion-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__details-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: $color-green-dark;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color $transition-base;
+
+    &:hover { color: $color-green-primary; }
+  }
+
+  &__suggestion-details {
+    margin-top: 8px;
+    max-height: 120px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-right: 4px;
+  }
+
+  &__suggestion-detail-item {
+    font-size: 12px;
+    color: $color-gray-700;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    s { opacity: 0.55; }
+  }
+
+  &__suggestion-arrow {
+    margin: 0 4px;
+    color: $color-gray-500;
+  }
+
   // ── Files Section Header ──────────────────────────────────────────────────
   &__files-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
   }
 
   &__files-label {
@@ -324,31 +380,23 @@ $transition-base: 150ms ease;
     gap: 12px;
     flex: 1;
     min-height: 0;
-  }
-
-  // ── Grid View (scrolls internally when tall) ─────────────────────────────
-  &__grid {
-    display: grid;
-    // Fixed-size cards: prevents "resizing" as more files appear.
-    // The grid will add/remove columns based on available width, but card width stays stable.
-    grid-template-columns: repeat(auto-fill, 200px);
-    justify-content: start;
-    gap: 12px;
-    flex: 1;
-    min-height: 0;
-    max-height: 360px;
-    overflow-y: scroll; // always show vertical scrollbar when this section is present
-    padding: 2px 6px 2px 2px;
+    overflow-y: auto;
+    overflow-x: hidden;
     scrollbar-gutter: stable;
   }
 
-  @media (max-width: 520px) {
-    &__grid {
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    }
+  // ── Grid View ────────────────────────────────────────────────────────────
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: start;
+    align-content: start;
+    gap: 12px;
+    padding: 2px 4px 8px 2px;
   }
 
   &__card {
+    min-width: 0; // prevent overflow blowout inside 1fr column
     border: 1px solid $color-gray-200;
     border-radius: $radius-md;
     overflow: hidden;
@@ -367,7 +415,9 @@ $transition-base: 150ms ease;
 
   &__card-thumb {
     position: relative;
-    aspect-ratio: 4 / 3;
+    width: 100%;
+    height: 110px;
+    flex-shrink: 0;
     background: $color-gray-100;
     overflow: hidden;
 
@@ -442,9 +492,13 @@ $transition-base: 150ms ease;
   }
 
   &__card-footer {
-    padding: 8px 10px;
+    padding: 7px 10px;
 
-    &--duplicate { background: $color-yellow-bg; }
+    &--duplicate {
+      background: $color-yellow-bg;
+
+      .content-upload__card-name { color: $color-yellow-text; }
+    }
   }
 
   &__card-name-row {
@@ -502,9 +556,8 @@ $transition-base: 150ms ease;
     animation: slideDown 160ms ease both;
 
     &--standalone {
-      margin-top: 12px;
-      padding: 12px 14px;
-      border: 2px solid $color-green-primary;
+      padding: 8px 12px;
+      border: 1.5px solid $color-green-primary;
       border-radius: $radius-md;
       background: #fafffe;
       width: 100%;
@@ -514,11 +567,11 @@ $transition-base: 150ms ease;
 
   &__rename-label {
     display: block;
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
     letter-spacing: 0.1em;
     color: $color-green-dark;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     text-transform: uppercase;
   }
 
@@ -530,9 +583,9 @@ $transition-base: 150ms ease;
 
   &__rename-input {
     flex: 1;
-    border: 2px solid $color-gray-300;
+    border: 1.5px solid $color-gray-300;
     border-radius: $radius-sm;
-    padding: 6px 10px;
+    padding: 5px 9px;
     font-size: 12px;
     color: $color-gray-900;
     background: #fff;
@@ -542,7 +595,7 @@ $transition-base: 150ms ease;
 
     &:focus {
       border-color: $color-green-primary;
-      box-shadow: 0 0 0 3px rgba(101, 163, 13, 0.15);
+      box-shadow: 0 0 0 2px rgba(101, 163, 13, 0.15);
     }
   }
 
@@ -551,36 +604,27 @@ $transition-base: 150ms ease;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    flex: 1;
-    min-height: 0;
-    max-height: 360px;
-    overflow-y: scroll; // always show vertical scrollbar when this section is present
-    padding: 2px 6px 2px 2px;
-    scrollbar-gutter: stable;
+    padding: 2px 4px 8px 2px;
   }
 
-  // ── Clean scrollbars (WebKit) ────────────────────────────────────────────
-  &__grid::-webkit-scrollbar,
-  &__list::-webkit-scrollbar {
+  // ── Clean scrollbar on files-body (WebKit) ───────────────────────────────
+  &__files-body::-webkit-scrollbar {
     width: 10px;
   }
 
-  &__grid::-webkit-scrollbar-track,
-  &__list::-webkit-scrollbar-track {
+  &__files-body::-webkit-scrollbar-track {
     background: transparent;
   }
 
-  &__grid::-webkit-scrollbar-thumb,
-  &__list::-webkit-scrollbar-thumb {
-    background: rgba(17, 24, 39, 0.18);
+  &__files-body::-webkit-scrollbar-thumb {
+    background: rgba(17, 24, 39, 0.10);
     border-radius: $radius-full;
     border: 3px solid transparent;
     background-clip: content-box;
   }
 
-  &__grid:hover::-webkit-scrollbar-thumb,
-  &__list:hover::-webkit-scrollbar-thumb {
-    background: rgba(17, 24, 39, 0.28);
+  &__files-body:hover::-webkit-scrollbar-thumb {
+    background: rgba(17, 24, 39, 0.10);
     border: 3px solid transparent;
     background-clip: content-box;
   }
@@ -743,7 +787,7 @@ $transition-base: 150ms ease;
 
   // ── Buttons ───────────────────────────────────────────────────────────────
   &__btn {
-    padding: 8px 16px;
+    padding: 7px 14px;
     border-radius: $radius-sm;
     font-size: 13px;
     font-weight: 600;
@@ -835,7 +879,7 @@ $transition-base: 150ms ease;
     align-items: center;
     gap: 10px;
     padding-top: 4px;
-    margin-top: auto;
+    flex-shrink: 0;
   }
 
   // ── Success Modal ─────────────────────────────────────────────────────────
@@ -845,13 +889,9 @@ $transition-base: 150ms ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 50;
-    pointer-events: none;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.48);
     padding: 20px;
-
-    .content-upload__modal {
-      pointer-events: auto;
-    }
   }
 
   &__modal {

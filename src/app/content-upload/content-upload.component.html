@@ -1,5 +1,5 @@
-<div class="content-upload">
-  @if (!showSuccessModal()) {
+@if (!showSuccessModal()) {
+  <div class="content-upload">
     <!-- ── Header ──────────────────────────────────────────────────────────── -->
     <div class="content-upload__header">
       <div>
@@ -13,397 +13,411 @@
       </button>
     </div>
 
-  <!-- ── Dropzone ────────────────────────────────────────────────────────── -->
-  <div
-    class="content-upload__dropzone"
-    [class.content-upload__dropzone--drag-over]="isDraggingOver()"
-    (dragover)="onDragOver($event)"
-    (dragleave)="onDragLeave($event)"
-    (drop)="onDrop($event)"
-    (click)="fileInput.click()"
-    role="button"
-    tabindex="0"
-    (keydown.enter)="fileInput.click()"
-    aria-label="Drop files here or click to browse"
-  >
-    <div class="content-upload__dropzone-icon">
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-        <path d="M16 22V10M16 10L11 15M16 10l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M8 26h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <p class="content-upload__dropzone-text">Drop files here or click to browse</p>
-    <div class="content-upload__badges">
-      @for (badge of dropzoneBadges; track badge) {
-        <span
-          class="content-upload__badge"
-          [class.content-upload__badge--active]="isDraggingOver()"
-        >{{ badge }}</span>
-      }
-    </div>
-    <input
-      #fileInput
-      type="file"
-      [accept]="fileInputAccept"
-      multiple
-      class="sr-only"
-      (change)="onFileInputChange($event)"
-    />
-  </div>
-
-  <!-- ── Validation Error Banners ───────────────────────────────────────── -->
-  @for (error of validationErrors(); track error.fileId) {
-    <div class="content-upload__banner content-upload__banner--error">
-      <svg class="content-upload__banner-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M8 5v3.5M8 11h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-      <span class="content-upload__banner-message">{{ error.message }}</span>
-      @if (error.type === 'unsupported-type' || error.type === 'special-chars') {
-        <span class="content-upload__banner-filename">: {{ error.filename }}</span>
-      }
-      <button
-        class="content-upload__banner-close"
-        type="button"
-        (click)="dismissError(error.fileId)"
-        aria-label="Dismiss error"
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M11 3L3 11M3 3l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- ── Dropzone ────────────────────────────────────────────────────────── -->
+    <div
+      class="content-upload__dropzone"
+      [class.content-upload__dropzone--drag-over]="isDraggingOver()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+      (click)="fileInput.click()"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="fileInput.click()"
+      aria-label="Drop files here or click to browse"
+    >
+      <div class="content-upload__dropzone-icon">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <path d="M16 22V10M16 10L11 15M16 10l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 26h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-      </button>
-    </div>
-  }
-
-  <!-- ── Duplicate Banners ───────────────────────────────────────────────── -->
-  @if (hasUnresolvedDuplicates()) {
-    <div class="content-upload__banner content-upload__banner--warning">
-      <svg class="content-upload__banner-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M8 5v3.5M8 11h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-      <div>
-        <p class="content-upload__banner-title">Duplicate</p>
-        <p class="content-upload__banner-message">{{ unresolvedDuplicateCount() }} file{{ unresolvedDuplicateCount() > 1 ? 's' : '' }} with duplicate title{{ unresolvedDuplicateCount() > 1 ? 's' : '' }}</p>
       </div>
+      <p class="content-upload__dropzone-text">Drop files here or click to browse</p>
+      <div class="content-upload__badges">
+        @for (badge of dropzoneBadges; track badge) {
+          <span
+            class="content-upload__badge"
+            [class.content-upload__badge--active]="isDraggingOver()"
+          >{{ badge }}</span>
+        }
+      </div>
+      <input
+        #fileInput
+        type="file"
+        [accept]="fileInputAccept"
+        multiple
+        class="sr-only"
+        (change)="onFileInputChange($event)"
+      />
     </div>
 
-    <!-- Consolidated Suggestion Banner -->
-    @if (firstUnresolvedDuplicate()) {
-      <div class="content-upload__banner content-upload__banner--suggestion">
+    <!-- ── Validation Error Banners ───────────────────────────────────────── -->
+    @for (error of validationErrors(); track error.fileId) {
+      <div class="content-upload__banner content-upload__banner--error">
         <svg class="content-upload__banner-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
           <path d="M8 5v3.5M8 11h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        <div class="flex-1">
-          <p class="content-upload__banner-title">Suggestion</p>
-          <p class="content-upload__banner-message">
-            {{ unresolvedDuplicateCount() }} files rename:
-            @for (dup of unresolvedDuplicates(); track dup.fileId; let last = $last) {
-              <s>{{ dup.currentName }}</s> → {{ dup.suggestedName }}@if (!last) { <span class="content-upload__suggestion-separator"></span> }
-            }
-          </p>
-        </div>
-        <div class="content-upload__banner-actions">
-          <button
-            class="content-upload__btn content-upload__btn--ghost"
-            type="button"
-            (click)="openRenameForDuplicate(firstUnresolvedDuplicate().fileId)"
-          >Rename</button>
-          <button
-            class="content-upload__btn content-upload__btn--primary"
-            type="button"
-            (click)="acceptSuggestion(firstUnresolvedDuplicate().fileId, firstUnresolvedDuplicate().suggestedName)"
-          >Accept</button>
-        </div>
+        <span class="content-upload__banner-message">{{ error.message }}</span>
+        @if (error.type === 'unsupported-type' || error.type === 'special-chars') {
+          <span class="content-upload__banner-filename">: {{ error.filename }}</span>
+        }
+        <button
+          class="content-upload__banner-close"
+          type="button"
+          (click)="dismissError(error.fileId)"
+          aria-label="Dismiss error"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M11 3L3 11M3 3l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
     }
-  }
 
-  <!-- ── Selected Files Section ─────────────────────────────────────────── -->
-  @if (selectedFiles().length > 0) {
-    <div class="content-upload__files-header">
-      <div class="content-upload__files-label">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M3 2h7l3 3v9H3V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-          <path d="M10 2v3h3" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+    <!-- ── Duplicate Banners ───────────────────────────────────────────────── -->
+    @if (hasUnresolvedDuplicates()) {
+      <div class="content-upload__banner content-upload__banner--warning">
+        <svg class="content-upload__banner-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 5v3.5M8 11h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        <span>Selected Files</span>
+        <div>
+          <p class="content-upload__banner-title">Duplicate</p>
+          <p class="content-upload__banner-message">{{ unresolvedDuplicateCount() }} file{{ unresolvedDuplicateCount() > 1 ? 's' : '' }} with duplicate title{{ unresolvedDuplicateCount() > 1 ? 's' : '' }}</p>
+        </div>
       </div>
-      <div class="content-upload__view-controls">
-        <button
-          class="content-upload__view-btn"
-          [class.content-upload__view-btn--active]="viewMode() === 'list'"
-          type="button"
-          (click)="setViewMode('list')"
-          aria-label="List view"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M3 4h10M3 8h10M3 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </button>
-        <button
-          class="content-upload__view-btn"
-          [class.content-upload__view-btn--active]="viewMode() === 'grid'"
-          type="button"
-          (click)="setViewMode('grid')"
-          aria-label="Grid view"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>
-            <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>
-            <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>
-            <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>
-          </svg>
-        </button>
-        <span class="content-upload__count-badge">{{ selectedFiles().length }}</span>
-      </div>
-    </div>
 
-    <div class="content-upload__files-body">
-      <!-- Grid View -->
-      @if (viewMode() === 'grid') {
-        <div class="content-upload__grid">
-          @for (file of selectedFiles(); track file.id) {
-            <div
-              class="content-upload__card"
-              [class.content-upload__card--duplicate]="isDuplicate(file.id)"
-            >
-            <!-- Thumbnail -->
-            <div class="content-upload__card-thumb">
-              @if (file.file.type.startsWith('image/')) {
-                <img
-                  [src]="file.previewUrl ?? ''"
-                  [alt]="file.name"
-                  class="content-upload__card-img"
-                />
+      <!-- Consolidated Suggestion Banner -->
+      @if (firstUnresolvedDuplicate()) {
+        <div class="content-upload__banner content-upload__banner--suggestion">
+          <svg class="content-upload__banner-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 5v3.5M8 11h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <div class="content-upload__suggestion-body">
+            <p class="content-upload__banner-message">
+              {{ unresolvedDuplicateCount() }} files rename:
+              @if (unresolvedDuplicateCount() < 3) {
+                @for (dup of unresolvedDuplicates(); track dup.fileId; let last = $last) {
+                  <s>{{ dup.currentName }}</s> → {{ dup.suggestedName }}@if (!last) { <span class="content-upload__suggestion-separator"></span> }
+                }
               } @else {
-                <video
-                  class="content-upload__card-img"
-                  [src]="file.previewUrl ?? undefined"
-                  muted
-                  loop
-                  autoplay
-                  playsinline
-                  preload="metadata"
-                ></video>
-              }
-
-              <!-- Progress overlay -->
-              @if (file.progress !== null && uploadStatus() === 'uploading') {
-                <div class="content-upload__progress-overlay">
-                  <span class="content-upload__progress-text">{{ file.progress }}%</span>
-                </div>
-              }
-
-              <!-- Duplicate badge -->
-              @if (isDuplicate(file.id)) {
                 <button
-                  class="content-upload__duplicate-badge"
+                  class="content-upload__details-toggle"
                   type="button"
-                  (click)="startRename(file.id)"
-                >
-                  ▲ Duplicate — click to rename
-                </button>
+                  (click)="toggleSuggestionDetails()"
+                >{{ showSuggestionDetails() ? 'Hide details' : 'Show details' }}</button>
               }
-
-              <!-- Delete button (visible on hover) -->
-              <button
-                class="content-upload__card-delete"
-                type="button"
-                (click)="removeFile(file.id)"
-                aria-label="Remove file"
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-              </button>
-            </div>
-
-            <!-- Card Footer -->
-            <div
-              class="content-upload__card-footer"
-              [class.content-upload__card-footer--duplicate]="isDuplicate(file.id)"
-            >
-              <div class="content-upload__card-name-row">
-                <p class="content-upload__card-name truncate" [title]="file.name">{{ file.name }}</p>
-                @if (isRenamed(file.id)) {
-                  <span class="content-upload__renamed-badge content-upload__renamed-badge--card">renamed</span>
+            </p>
+            @if (unresolvedDuplicateCount() >= 3 && showSuggestionDetails()) {
+              <div class="content-upload__suggestion-details">
+                @for (dup of unresolvedDuplicates(); track dup.fileId) {
+                  <p class="content-upload__suggestion-detail-item">
+                    <s>{{ dup.currentName }}</s> <span class="content-upload__suggestion-arrow">→</span> {{ dup.suggestedName }}
+                  </p>
                 }
               </div>
-              <div class="content-upload__card-meta">
-                <span class="content-upload__card-type-size">{{ file.typeLabel }} • {{ file.formattedSize }}</span>
-                <button
-                  class="content-upload__card-chevron"
-                  type="button"
-                  (click)="renamingFileId() === file.id ? cancelRename() : startRename(file.id)"
-                  aria-label="Rename"
-                >
-                  <svg
-                    width="14" height="14" viewBox="0 0 14 14" fill="none"
-                    [style.transform]="renamingFileId() === file.id ? 'rotate(180deg)' : 'none'"
-                  >
-                    <path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            </div>
-          }
-        </div>
-      }
-
-      <!-- List View -->
-      @if (viewMode() === 'list') {
-        <div class="content-upload__list">
-          @for (file of selectedFiles(); track file.id) {
-            <div
-              class="content-upload__list-item"
-              [class.content-upload__list-item--duplicate]="isDuplicate(file.id)"
-            >
-            <!-- Thumbnail -->
-            <div class="content-upload__list-thumb">
-              @if (file.file.type.startsWith('image/')) {
-                <img [src]="file.previewUrl ?? ''" [alt]="file.name" class="content-upload__list-img" />
-              } @else {
-                <div class="content-upload__list-video-wrap">
-                  <video
-                    class="content-upload__list-img"
-                    [src]="file.previewUrl ?? undefined"
-                    muted
-                    autoplay
-                    loop
-                    preload="metadata"
-                  ></video>
-                  <div class="content-upload__list-play-icon">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M3 2l9 5-9 5V2z" fill="white"/>
-                    </svg>
-                  </div>
-                </div>
-              }
-            </div>
-
-            <!-- Duplicate label (list) -->
-            @if (isDuplicate(file.id)) {
-              <span class="content-upload__list-duplicate-label">▲ Duplicate — click to rename</span>
             }
-
-            <!-- Info -->
-            <div class="content-upload__list-info">
-              <div class="content-upload__list-name-row">
-                <span
-                  class="content-upload__list-name"
-                  [class.content-upload__list-name--duplicate]="isDuplicate(file.id)"
-                >{{ file.name }}</span>
-                @if (isRenamed(file.id)) {
-                  <span class="content-upload__renamed-badge">renamed</span>
-                }
-                @if (uploadStatus() === 'uploading' && file.progress !== null) {
-                  <span class="content-upload__list-status content-upload__list-status--progress">{{ file.progress }}%</span>
-                } @else if (uploadStatus() === 'idle') {
-                  <span class="content-upload__list-status">pending</span>
-                }
-              </div>
-              <div class="content-upload__list-meta">
-                <span class="content-upload__type-chip">{{ file.typeLabel }}</span>
-                <span class="content-upload__list-size">{{ file.formattedSize }}</span>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="content-upload__list-actions">
-              <button
-                class="content-upload__action-btn"
-                type="button"
-                (click)="startRename(file.id)"
-                aria-label="Rename file"
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <button
-                class="content-upload__action-btn"
-                type="button"
-                (click)="removeFile(file.id)"
-                aria-label="Remove file"
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M11 3L3 11M3 3l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-              </button>
-            </div>
-
-            </div>
-          }
-        </div>
-      }
-
-      <!-- Standalone Rename Panel (shared for grid and list; not inside any card) -->
-      @if (renamingFileId()) {
-        <div #renamePanel class="content-upload__rename-panel content-upload__rename-panel--standalone">
-          <label class="content-upload__rename-label">RENAME CONTENT</label>
-          <div class="content-upload__rename-row">
-            <input
-              class="content-upload__rename-input"
-              type="text"
-              [ngModel]="renameInputValue()"
-              (ngModelChange)="renameInputValue.set($event)"
-              (keydown.enter)="saveRename()"
-              (keydown.escape)="cancelRename()"
-              placeholder="Enter new name"
-              autofocus
-            />
-            <button
-              class="content-upload__btn content-upload__btn--primary"
-              type="button"
-              (click)="saveRename()"
-            >SAVE</button>
+          </div>
+          <div class="content-upload__banner-actions">
             <button
               class="content-upload__btn content-upload__btn--ghost"
               type="button"
-              (click)="cancelRename()"
-            >CANCEL</button>
+              (click)="openRenameForDuplicate(firstUnresolvedDuplicate().fileId)"
+            >Rename</button>
+            <button
+              class="content-upload__btn content-upload__btn--primary"
+              type="button"
+              (click)="acceptSuggestion(firstUnresolvedDuplicate().fileId, firstUnresolvedDuplicate().suggestedName)"
+            >Accept</button>
           </div>
         </div>
       }
-    </div>
-  }
+    }
 
-  <!-- ── Upload loading overlay ─────────────────────────────────────────── -->
-  @if (uploadStatus() === 'uploading') {
-    <div class="content-upload__upload-overlay" aria-live="polite" aria-busy="true">
-      <div class="content-upload__upload-spinner" aria-hidden="true"></div>
-      <p class="content-upload__upload-overlay-text">Uploading...</p>
-    </div>
-  }
+    <!-- ── Selected Files Section ─────────────────────────────────────────── -->
+    @if (selectedFiles().length > 0) {
+      <div class="content-upload__files-header">
+        <div class="content-upload__files-label">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 2h7l3 3v9H3V2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+            <path d="M10 2v3h3" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          </svg>
+          <span>Selected Files</span>
+        </div>
+        <div class="content-upload__view-controls">
+          <button
+            class="content-upload__view-btn"
+            [class.content-upload__view-btn--active]="viewMode() === 'list'"
+            type="button"
+            (click)="setViewMode('list')"
+            aria-label="List view"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 4h10M3 8h10M3 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button
+            class="content-upload__view-btn"
+            [class.content-upload__view-btn--active]="viewMode() === 'grid'"
+            type="button"
+            (click)="setViewMode('grid')"
+            aria-label="Grid view"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+              <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+              <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+              <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+            </svg>
+          </button>
+          <span class="content-upload__count-badge">{{ selectedFiles().length }}</span>
+        </div>
+      </div>
 
-  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
-  <div class="content-upload__footer">
-    <button
-      class="content-upload__btn content-upload__btn--secondary"
-      type="button"
-      (click)="closeRequest.emit()"
-    >
-      Close
-    </button>
-    <button
-      class="content-upload__btn content-upload__btn--primary"
-      [class.content-upload__btn--disabled]="isUploadDisabled()"
-      [disabled]="isUploadDisabled()"
-      type="button"
-      (click)="startUpload()"
-    >
-      @if (uploadStatus() === 'uploading') {
-        <span class="content-upload__btn-spinner" aria-hidden="true"></span>
-      }
-      {{ selectedFiles().length === 0 ? 'Select files to upload' : uploadButtonLabel() }}
-    </button>
+      <div class="content-upload__files-body">
+        <!-- Grid View -->
+        @if (viewMode() === 'grid') {
+          <div class="content-upload__grid">
+            @for (file of selectedFiles(); track file.id) {
+              <div
+                class="content-upload__card"
+                [class.content-upload__card--duplicate]="isDuplicate(file.id)"
+              >
+                <!-- Thumbnail -->
+                <div class="content-upload__card-thumb">
+                  @if (file.file.type.startsWith('image/')) {
+                    <img
+                      [src]="file.previewUrl ?? ''"
+                      [alt]="file.name"
+                      class="content-upload__card-img"
+                    />
+                  } @else {
+                    <video
+                      class="content-upload__card-img"
+                      [src]="file.previewUrl ?? undefined"
+                      muted
+                      loop
+                      autoplay
+                      playsinline
+                      preload="metadata"
+                    ></video>
+                  }
+
+                  <!-- Progress overlay -->
+                  @if (file.progress !== null && uploadStatus() === 'uploading') {
+                    <div class="content-upload__progress-overlay">
+                      <span class="content-upload__progress-text">{{ file.progress }}%</span>
+                    </div>
+                  }
+
+                  <!-- Duplicate badge -->
+                  @if (isDuplicate(file.id)) {
+                    <button
+                      class="content-upload__duplicate-badge"
+                      type="button"
+                      (click)="startRename(file.id)"
+                    >
+                      ▲ Duplicate — click to rename
+                    </button>
+                  }
+
+                  <!-- Delete button (visible on hover) -->
+                  <button
+                    class="content-upload__card-delete"
+                    type="button"
+                    (click)="removeFile(file.id)"
+                    aria-label="Remove file"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M9 3L3 9M3 3l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Card Footer -->
+                <div
+                  class="content-upload__card-footer"
+                  [class.content-upload__card-footer--duplicate]="isDuplicate(file.id)"
+                >
+                  <div class="content-upload__card-name-row">
+                    <p class="content-upload__card-name truncate" [title]="file.name">{{ file.name }}</p>
+                    @if (isRenamed(file.id)) {
+                      <span class="content-upload__renamed-badge content-upload__renamed-badge--card">renamed</span>
+                    }
+                  </div>
+                  <div class="content-upload__card-meta">
+                    <span class="content-upload__card-type-size">{{ file.typeLabel }} • {{ file.formattedSize }}</span>
+                    <button
+                      class="content-upload__card-chevron"
+                      type="button"
+                      (click)="renamingFileId() === file.id ? cancelRename() : startRename(file.id)"
+                      aria-label="Rename"
+                    >
+                      <svg
+                        width="14" height="14" viewBox="0 0 14 14" fill="none"
+                        [style.transform]="renamingFileId() === file.id ? 'rotate(180deg)' : 'none'"
+                      >
+                        <path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- List View -->
+        @if (viewMode() === 'list') {
+          <div class="content-upload__list">
+            @for (file of selectedFiles(); track file.id) {
+              <div
+                class="content-upload__list-item"
+                [class.content-upload__list-item--duplicate]="isDuplicate(file.id)"
+              >
+                <!-- Thumbnail -->
+                <div class="content-upload__list-thumb">
+                  @if (file.file.type.startsWith('image/')) {
+                    <img [src]="file.previewUrl ?? ''" [alt]="file.name" class="content-upload__list-img" />
+                  } @else {
+                    <div class="content-upload__list-video-wrap">
+                      <video
+                        class="content-upload__list-img"
+                        [src]="file.previewUrl ?? undefined"
+                        muted
+                        autoplay
+                        loop
+                        preload="metadata"
+                      ></video>
+                      <div class="content-upload__list-play-icon">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <path d="M3 2l9 5-9 5V2z" fill="white"/>
+                        </svg>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <!-- Duplicate label (list) -->
+                @if (isDuplicate(file.id)) {
+                  <span class="content-upload__list-duplicate-label">▲ Duplicate — click to rename</span>
+                }
+
+                <!-- Info -->
+                <div class="content-upload__list-info">
+                  <div class="content-upload__list-name-row">
+                    <span
+                      class="content-upload__list-name"
+                      [class.content-upload__list-name--duplicate]="isDuplicate(file.id)"
+                    >{{ file.name }}</span>
+                    @if (isRenamed(file.id)) {
+                      <span class="content-upload__renamed-badge">renamed</span>
+                    }
+                    @if (uploadStatus() === 'uploading' && file.progress !== null) {
+                      <span class="content-upload__list-status content-upload__list-status--progress">{{ file.progress }}%</span>
+                    } @else if (uploadStatus() === 'idle') {
+                      <span class="content-upload__list-status">pending</span>
+                    }
+                  </div>
+                  <div class="content-upload__list-meta">
+                    <span class="content-upload__type-chip">{{ file.typeLabel }}</span>
+                    <span class="content-upload__list-size">{{ file.formattedSize }}</span>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="content-upload__list-actions">
+                  <button
+                    class="content-upload__action-btn"
+                    type="button"
+                    (click)="startRename(file.id)"
+                    aria-label="Rename file"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <button
+                    class="content-upload__action-btn"
+                    type="button"
+                    (click)="removeFile(file.id)"
+                    aria-label="Remove file"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M11 3L3 11M3 3l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Standalone Rename Panel (shared for grid and list; not inside any card) -->
+        @if (renamingFileId()) {
+          <div #renamePanel class="content-upload__rename-panel content-upload__rename-panel--standalone">
+            <label class="content-upload__rename-label">RENAME CONTENT</label>
+            <div class="content-upload__rename-row">
+              <input
+                class="content-upload__rename-input"
+                type="text"
+                [ngModel]="renameInputValue()"
+                (ngModelChange)="renameInputValue.set($event)"
+                (keydown.enter)="saveRename()"
+                (keydown.escape)="cancelRename()"
+                placeholder="Enter new name"
+                autofocus
+              />
+              <button
+                class="content-upload__btn content-upload__btn--primary"
+                type="button"
+                (click)="saveRename()"
+              >SAVE</button>
+              <button
+                class="content-upload__btn content-upload__btn--ghost"
+                type="button"
+                (click)="cancelRename()"
+              >CANCEL</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ── Upload loading overlay ─────────────────────────────────────────── -->
+    @if (uploadStatus() === 'uploading') {
+      <div class="content-upload__upload-overlay" aria-live="polite" aria-busy="true">
+        <div class="content-upload__upload-spinner" aria-hidden="true"></div>
+        <p class="content-upload__upload-overlay-text">Uploading...</p>
+      </div>
+    }
+
+    <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+    <div class="content-upload__footer">
+      <button
+        class="content-upload__btn content-upload__btn--secondary"
+        type="button"
+        (click)="closeRequest.emit()"
+      >
+        Close
+      </button>
+      <button
+        class="content-upload__btn content-upload__btn--primary"
+        [class.content-upload__btn--disabled]="isUploadDisabled()"
+        [disabled]="isUploadDisabled()"
+        type="button"
+        (click)="startUpload()"
+      >
+        @if (uploadStatus() === 'uploading') {
+          <span class="content-upload__btn-spinner" aria-hidden="true"></span>
+        }
+        {{ selectedFiles().length === 0 ? 'Select files to upload' : uploadButtonLabel() }}
+      </button>
+    </div>
   </div>
-
-  }
-</div>
+}
 
 <!-- ── Success Modal ───────────────────────────────────────────────────── -->
 @if (showSuccessModal()) {

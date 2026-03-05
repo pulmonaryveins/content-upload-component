@@ -70,6 +70,7 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
   readonly renameInputValue = signal<string>('');
   readonly uploadStatus = signal<UploadStatus>('idle');
   readonly showSuccessModal = signal<boolean>(false);
+  readonly showSuggestionDetails = signal<boolean>(false);
 
   // ── Computed Signals ─────────────────────────────────────────────────────
   readonly hasUnresolvedDuplicates = computed(() =>
@@ -324,6 +325,10 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
 
   openRenameForDuplicate(fileId: string): void {
     this.startRename(fileId);
+  }
+
+  toggleSuggestionDetails(): void {
+    this.showSuggestionDetails.update((v) => !v);
   }
 
   isDuplicate(fileId: string): boolean {
