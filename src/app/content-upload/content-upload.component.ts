@@ -1,6 +1,8 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
+  ElementRef,
   NgZone,
   OnDestroy,
   OnInit,
@@ -13,7 +15,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import Uppy from '@uppy/core';
-import Transloadit from '@uppy/transloadit';
+import Transloadit, { COMPANION_ALLOWED_HOSTS, COMPANION_URL } from '@uppy/transloadit';
+import GoogleDrivePicker from '@uppy/google-drive-picker';
 
 import { environment } from '../../environments/environment';
 import { DROPZONE_BADGE_LABELS, FILE_INPUT_ACCEPT } from './content-upload.constants';
@@ -33,6 +36,7 @@ import {
   getBaseName,
   getMimeLabel,
   validateFile,
+  validateGDriveFile,
 } from './content-upload.utils';
 
 @Component({
@@ -46,9 +50,11 @@ import {
 export class ContentUploadComponent implements OnInit, OnDestroy {
   // ── Services ────────────────────────────────────────────────────────────
   private readonly ngZone = inject(NgZone);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   // ── Template References ──────────────────────────────────────────────────
   @ViewChild('renamePanel') renamePanel?: { nativeElement: HTMLElement };
+  @ViewChild('gdriveMount', { static: false }) gdriveMount?: ElementRef<HTMLElement>;
 
   // ── Input ────────────────────────────────────────────────────────────────
   readonly existingLibraryNames = input<string[]>([]);
@@ -61,6 +67,7 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
   private uppy!: Uppy;
   private currentAssemblyUrl: string | null = null;
   private pollInterval: ReturnType<typeof setInterval> | null = null;
+  private readonly uppyManagedFileIds = new Set<string>();
 
   // ── State Signals ────────────────────────────────────────────────────────
   readonly selectedFiles = signal<UploadFile[]>([]);
@@ -73,6 +80,7 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
   readonly uploadStatus = signal<UploadStatus>('idle');
   readonly showSuccessModal = signal<boolean>(false);
   readonly showSuggestionDetails = signal<boolean>(false);
+  readonly uploadTab = signal<'local' | 'drive'>('local');
 
   // ── Computed Signals ─────────────────────────────────────────────────────
   readonly hasUnresolvedDuplicates = computed(() =>
@@ -118,8 +126,12 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.clearPolling();
+    const plugin = this.uppy.getPlugin('GoogleDrivePicker');
+    if (plugin) {
+      try { (plugin as unknown as { unmount(): void }).unmount(); } catch { /* ignore */ }
+    }
     this.selectedFiles().forEach((f) => {
-      if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
+      if (f.previewUrl && f.source !== 'google-drive') URL.revokeObjectURL(f.previewUrl);
     });
     this.uppy.destroy();
   }
@@ -143,6 +155,90 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
         },
         waitForEncoding: false,
         alwaysRunAssembly: false,
+      });
+
+      this.uppy.use(GoogleDrivePicker, {
+        companionUrl: COMPANION_URL,
+        companionAllowedHosts: COMPANION_ALLOWED_HOSTS,
+        clientId: environment.googleClientId,
+        apiKey: environment.googleApiKey,
+        appId: environment.googleAppId,
+      });
+
+      this.uppy.on('file-added', (uppyFile) => {
+        if (uppyFile.source !== 'GoogleDrivePicker') return;
+
+        const id = uppyFile.id;
+        this.uppyManagedFileIds.add(id);
+        const mimeType = uppyFile.type ?? '';
+        const rawSize = uppyFile.size;
+        const fullName = uppyFile.name ?? 'unknown';
+        const ext = fullName.includes('.') ? fullName.split('.').pop()! : '';
+        const baseName = getBaseName(fullName);
+        const error = validateGDriveFile(mimeType, rawSize ?? 0, fullName);
+
+        this.ngZone.run(() => {
+          if (error) {
+            this.validationErrors.update((errs) => [...errs, { ...error, fileId: id }]);
+            this.uppy.removeFile(id);
+            this.uppyManagedFileIds.delete(id);
+            return;
+          }
+          if (this.selectedFiles().length >= 10) {
+            this.validationErrors.update((errs) => [
+              ...errs,
+              {
+                fileId: id,
+                filename: fullName,
+                type: 'file-too-large',
+                message: 'Maximum 10 files allowed. Please remove some files to add more.',
+              },
+            ]);
+            this.uppy.removeFile(id);
+            this.uppyManagedFileIds.delete(id);
+            return;
+          }
+          this.selectedFiles.update((files) => [
+            ...files,
+            {
+              id,
+              source: 'google-drive',
+              remoteExt: ext,
+              name: baseName,
+              originalName: baseName,
+              previewUrl: null,
+              formattedSize: rawSize != null ? formatFileSize(rawSize) : 'Unknown',
+              typeLabel: getMimeLabel(mimeType),
+              progress: null,
+              renamed: false,
+            },
+          ]);
+          this.refreshDuplicates();
+        });
+
+        // Fetch thumbnail from Drive API v3
+        const remoteBody = (
+          uppyFile as unknown as { remote?: { body?: Record<string, string> } }
+        ).remote?.body;
+        const fileId = remoteBody?.['fileId'];
+        const accessToken = remoteBody?.['accessToken'];
+        if (fileId && accessToken) {
+          fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=thumbnailLink`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          })
+            .then((r) => r.json())
+            .then((data: { thumbnailLink?: string }) => {
+              const thumb = data.thumbnailLink?.replace(/=s\d+$/, '=s400');
+              if (thumb) {
+                this.ngZone.run(() => {
+                  this.selectedFiles.update((files) =>
+                    files.map((f) => (f.id === id ? { ...f, previewUrl: thumb } : f))
+                  );
+                });
+              }
+            })
+            .catch(() => { /* thumbnail fetch failure is non-fatal */ });
+        }
       });
 
       this.uppy.on('transloadit:assembly-created', (assembly) => {
@@ -176,6 +272,26 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
         }
       });
     });
+  }
+
+  // ── Tab Switching ────────────────────────────────────────────────────────
+  switchTab(tab: 'local' | 'drive'): void {
+    if (tab === this.uploadTab()) return;
+    if (tab === 'drive') {
+      this.uploadTab.set('drive');
+      this.cdr.detectChanges();
+      const plugin = this.uppy.getPlugin('GoogleDrivePicker');
+      const el = this.gdriveMount?.nativeElement;
+      if (plugin && el) {
+        (plugin as unknown as { mount(el: HTMLElement, plugin: unknown): void }).mount(el, plugin);
+      }
+    } else {
+      const plugin = this.uppy.getPlugin('GoogleDrivePicker');
+      if (plugin) {
+        try { (plugin as unknown as { unmount(): void }).unmount(); } catch { /* ignore */ }
+      }
+      this.uploadTab.set('local');
+    }
   }
 
   // ── Dropzone Handlers ────────────────────────────────────────────────────
@@ -219,7 +335,7 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
     const maxFiles = 10;
     const currentFileCount = this.selectedFiles().length;
     const remainingSlots = Math.max(0, maxFiles - currentFileCount);
-    
+
     if (remainingSlots === 0) {
       this.validationErrors.set([{
         fileId: '',
@@ -245,6 +361,7 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
 
       newUploadFiles.push({
         id,
+        source: 'local',
         file,
         name: getBaseName(file.name),
         originalName: getBaseName(file.name),
@@ -268,7 +385,11 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
   // ── File Actions ─────────────────────────────────────────────────────────
   removeFile(fileId: string): void {
     const file = this.selectedFiles().find((f) => f.id === fileId);
-    if (file?.previewUrl) URL.revokeObjectURL(file.previewUrl);
+    if (file?.previewUrl && file.source !== 'google-drive') URL.revokeObjectURL(file.previewUrl);
+    if (this.uppyManagedFileIds.has(fileId)) {
+      this.uppy.removeFile(fileId);
+      this.uppyManagedFileIds.delete(fileId);
+    }
     this.selectedFiles.update((files) => files.filter((f) => f.id !== fileId));
     this.duplicates.update((dupes) => dupes.filter((d) => d.fileId !== fileId));
     this.refreshDuplicates();
@@ -284,8 +405,7 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
     if (!file) return;
     this.renamingFileId.set(fileId);
     this.renameInputValue.set(file.name);
-    
-    // Scroll to rename panel after next render
+
     setTimeout(() => {
       this.renamePanel?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       const input = this.renamePanel?.nativeElement.querySelector('.content-upload__rename-input') as HTMLInputElement;
@@ -304,7 +424,6 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
         f.id === fileId ? { ...f, name: newName, renamed: true } : f
       )
     );
-    // Mark duplicate as resolved if this was a duplicate rename
     this.duplicates.update((dupes) =>
       dupes.map((d) => (d.fileId === fileId ? { ...d, resolved: true } : d))
     );
@@ -395,14 +514,24 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
     this.currentAssemblyUrl = null;
     this.clearPolling();
 
-    this.uppy.cancelAll();
+    // Remove only non-GDrive files already in Uppy's queue
+    for (const uppyFile of this.uppy.getFiles()) {
+      if (!this.uppyManagedFileIds.has(uppyFile.id)) {
+        this.uppy.removeFile(uppyFile.id);
+      }
+    }
 
+    // Add local files to Uppy
     for (const uploadFile of this.selectedFiles()) {
+      if (this.uppyManagedFileIds.has(uploadFile.id)) continue;
+      const localFile = uploadFile.file;
+      if (!localFile) continue;
+      const ext = localFile.name.split('.').pop();
       this.uppy.addFile({
         id: uploadFile.id,
-        name: uploadFile.name + '.' + uploadFile.file.name.split('.').pop(),
-        type: uploadFile.file.type,
-        data: uploadFile.file,
+        name: uploadFile.name + '.' + ext,
+        type: localFile.type,
+        data: localFile,
       });
     }
 
@@ -421,10 +550,10 @@ export class ContentUploadComponent implements OnInit, OnDestroy {
     this.validationErrors.set([]);
     this.uploadStatus.set('idle');
     this.currentAssemblyUrl = null;
+    this.uppyManagedFileIds.clear();
   }
 
   setViewMode(mode: ViewMode): void {
     this.viewMode.set(mode);
   }
-
 }

@@ -13,43 +13,78 @@
       </button>
     </div>
 
-    <!-- ── Dropzone ────────────────────────────────────────────────────────── -->
-    <div
-      class="content-upload__dropzone"
-      [class.content-upload__dropzone--drag-over]="isDraggingOver()"
-      (dragover)="onDragOver($event)"
-      (dragleave)="onDragLeave($event)"
-      (drop)="onDrop($event)"
-      (click)="fileInput.click()"
-      role="button"
-      tabindex="0"
-      (keydown.enter)="fileInput.click()"
-      aria-label="Drop files here or click to browse"
-    >
-      <div class="content-upload__dropzone-icon">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <path d="M16 22V10M16 10L11 15M16 10l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M8 26h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <!-- ── Upload Source Tabs ──────────────────────────────────────────────── -->
+    <div class="content-upload__tabs">
+      <button
+        class="content-upload__tab-btn"
+        [class.content-upload__tab-btn--active]="uploadTab() === 'local'"
+        type="button"
+        (click)="switchTab('local')"
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="1" y="3" width="12" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M5 3V2h4v1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
         </svg>
-      </div>
-      <p class="content-upload__dropzone-text">Drop files here or click to browse</p>
-      <div class="content-upload__badges">
-        @for (badge of dropzoneBadges; track badge) {
-          <span
-            class="content-upload__badge"
-            [class.content-upload__badge--active]="isDraggingOver()"
-          >{{ badge }}</span>
-        }
-      </div>
-      <input
-        #fileInput
-        type="file"
-        [accept]="fileInputAccept"
-        multiple
-        class="sr-only"
-        (change)="onFileInputChange($event)"
-      />
+        From Computer
+      </button>
+      <button
+        class="content-upload__tab-btn"
+        [class.content-upload__tab-btn--active]="uploadTab() === 'drive'"
+        type="button"
+        (click)="switchTab('drive')"
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1.5 10.5L4.5 5h5l3 5.5H1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+          <path d="M4.5 5L7 9.5M9.5 5L7 9.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        Google Drive
+      </button>
     </div>
+
+    <!-- ── Dropzone (local) ─────────────────────────────────────────────────── -->
+    @if (uploadTab() === 'local') {
+      <div
+        class="content-upload__dropzone"
+        [class.content-upload__dropzone--drag-over]="isDraggingOver()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        (click)="fileInput.click()"
+        role="button"
+        tabindex="0"
+        (keydown.enter)="fileInput.click()"
+        aria-label="Drop files here or click to browse"
+      >
+        <div class="content-upload__dropzone-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <path d="M16 22V10M16 10L11 15M16 10l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 26h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <p class="content-upload__dropzone-text">Drop files here or click to browse</p>
+        <div class="content-upload__badges">
+          @for (badge of dropzoneBadges; track badge) {
+            <span
+              class="content-upload__badge"
+              [class.content-upload__badge--active]="isDraggingOver()"
+            >{{ badge }}</span>
+          }
+        </div>
+        <input
+          #fileInput
+          type="file"
+          [accept]="fileInputAccept"
+          multiple
+          class="sr-only"
+          (change)="onFileInputChange($event)"
+        />
+      </div>
+    } @else {
+      <!-- ── Google Drive Panel ──────────────────────────────────────────── -->
+      <div class="content-upload__gdrive-panel">
+        <div #gdriveMount class="content-upload__gdrive-mount"></div>
+      </div>
+    }
 
     <!-- ── Validation Error Banners ───────────────────────────────────────── -->
     @for (error of validationErrors(); track error.fileId) {
@@ -188,22 +223,41 @@
               >
                 <!-- Thumbnail -->
                 <div class="content-upload__card-thumb">
-                  @if (file.file.type.startsWith('image/')) {
-                    <img
-                      [src]="file.previewUrl ?? ''"
-                      [alt]="file.name"
-                      class="content-upload__card-img"
-                    />
+                  @if (file.typeLabel === 'PNG' || file.typeLabel === 'JPEG') {
+                    @if (file.previewUrl) {
+                      <img
+                        [src]="file.previewUrl"
+                        [alt]="file.name"
+                        class="content-upload__card-img"
+                      />
+                    } @else {
+                      <div class="content-upload__gdrive-thumb">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                          <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                          <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.5"/>
+                          <path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </div>
+                    }
                   } @else {
-                    <video
-                      class="content-upload__card-img"
-                      [src]="file.previewUrl ?? undefined"
-                      muted
-                      loop
-                      autoplay
-                      playsinline
-                      preload="metadata"
-                    ></video>
+                    @if (file.previewUrl) {
+                      <video
+                        class="content-upload__card-img"
+                        [src]="file.previewUrl"
+                        muted
+                        loop
+                        autoplay
+                        playsinline
+                        preload="metadata"
+                      ></video>
+                    } @else {
+                      <div class="content-upload__gdrive-thumb content-upload__gdrive-thumb--video">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                          <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                          <path d="M10 9l6 3-6 3V9z" fill="currentColor"/>
+                        </svg>
+                      </div>
+                    }
                   }
 
                   <!-- Progress overlay -->
@@ -211,6 +265,11 @@
                     <div class="content-upload__progress-overlay">
                       <span class="content-upload__progress-text">{{ file.progress }}%</span>
                     </div>
+                  }
+
+                  <!-- Drive badge -->
+                  @if (file.source === 'google-drive') {
+                    <span class="content-upload__gdrive-badge">Drive</span>
                   }
 
                   <!-- Duplicate badge -->
@@ -302,24 +361,43 @@
 
                 <!-- Thumbnail -->
                 <div class="content-upload__list-thumb">
-                  @if (file.file.type.startsWith('image/')) {
-                    <img [src]="file.previewUrl ?? ''" [alt]="file.name" class="content-upload__list-img" />
-                  } @else {
-                    <div class="content-upload__list-video-wrap">
-                      <video
-                        class="content-upload__list-img"
-                        [src]="file.previewUrl ?? undefined"
-                        muted
-                        autoplay
-                        loop
-                        preload="metadata"
-                      ></video>
-                      <div class="content-upload__list-play-icon">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                          <path d="M3 2l9 5-9 5V2z" fill="white"/>
+                  @if (file.typeLabel === 'PNG' || file.typeLabel === 'JPEG') {
+                    @if (file.previewUrl) {
+                      <img [src]="file.previewUrl" [alt]="file.name" class="content-upload__list-img" />
+                    } @else {
+                      <div class="content-upload__gdrive-thumb">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                          <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.5"/>
+                          <path d="M3 15l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                       </div>
-                    </div>
+                    }
+                  } @else {
+                    @if (file.previewUrl) {
+                      <div class="content-upload__list-video-wrap">
+                        <video
+                          class="content-upload__list-img"
+                          [src]="file.previewUrl"
+                          muted
+                          autoplay
+                          loop
+                          preload="metadata"
+                        ></video>
+                        <div class="content-upload__list-play-icon">
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M3 2l9 5-9 5V2z" fill="white"/>
+                          </svg>
+                        </div>
+                      </div>
+                    } @else {
+                      <div class="content-upload__gdrive-thumb content-upload__gdrive-thumb--video">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                          <path d="M10 9l6 3-6 3V9z" fill="currentColor"/>
+                        </svg>
+                      </div>
+                    }
                   }
                 </div>
 
@@ -377,6 +455,9 @@
                   <div class="content-upload__list-meta">
                     <span class="content-upload__type-chip">{{ file.typeLabel }}</span>
                     <span class="content-upload__list-size">{{ file.formattedSize }}</span>
+                    @if (file.source === 'google-drive') {
+                      <span class="content-upload__gdrive-list-badge">Drive</span>
+                    }
                   </div>
                 </div>
 

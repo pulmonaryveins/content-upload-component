@@ -997,6 +997,165 @@ $transition-base: 150ms ease;
     line-height: 1.5;
   }
 
+  // ── Upload Source Tabs ────────────────────────────────────────────────────
+  &__tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid $color-gray-200;
+    flex-shrink: 0;
+    margin-bottom: -4px;
+  }
+
+  &__tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: $color-gray-500;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    margin-bottom: -1px;
+    transition: color $transition-base, border-color $transition-base;
+
+    &:hover { color: $color-gray-700; }
+
+    &--active {
+      color: $color-green-primary;
+      border-bottom-color: $color-green-primary;
+      font-weight: 600;
+    }
+  }
+
+  // ── Google Drive Panel ────────────────────────────────────────────────────
+  &__gdrive-panel {
+    border: 2px dashed $color-gray-300;
+    border-radius: $radius-md;
+    background: $color-gray-50;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  &__gdrive-mount {
+    flex: 1;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // ── GDrive thumbnail placeholder ──────────────────────────────────────────
+  &__gdrive-thumb {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $color-gray-100;
+    color: $color-gray-400;
+
+    &--video {
+      background: $color-gray-200;
+    }
+  }
+
+  // ── GDrive card badge ─────────────────────────────────────────────────────
+  &__gdrive-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: $radius-full;
+    background: #1a73e8;
+    color: #fff;
+    pointer-events: none;
+    letter-spacing: 0.02em;
+  }
+
+  // ── GDrive list badge ─────────────────────────────────────────────────────
+  &__gdrive-list-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: $radius-full;
+    background: #e8f0fe;
+    color: #1a73e8;
+    flex-shrink: 0;
+  }
+
+  // ── Uppy Auth View (pierce Angular's view encapsulation) ──────────────────
+  ::ng-deep {
+    .uppy-Root {
+      width: 100%;
+      height: 100%;
+      min-height: 180px;
+      font-family: inherit;
+    }
+
+    .uppy-GoogleDrivePicker-container,
+    .uppy-ProviderBrowser {
+      width: 100%;
+      height: 100%;
+    }
+
+    .uppy-Provider-auth {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      gap: 12px;
+      text-align: center;
+      width: 100%;
+      min-height: 180px;
+    }
+
+    .uppy-Provider-authIcon svg,
+    .uppy-Provider-authIcon img {
+      width: 40px;
+      height: 40px;
+    }
+
+    .uppy-Provider-authTitle {
+      font-size: 14px;
+      font-weight: 600;
+      color: $color-gray-800;
+      margin: 0;
+    }
+
+    .uppy-Provider-authMessage {
+      font-size: 12px;
+      color: $color-gray-500;
+      margin: 0;
+    }
+
+    .uppy-Provider-btn-google,
+    .uppy-Provider-authBtn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: $radius-full;
+      background: $color-green-primary;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background $transition-base;
+
+      &:hover { background: $color-green-dark; }
+    }
+  }
+
   // ── Library ───────────────────────────────────────────────────────────────
   &__library {
     margin-top: 8px;

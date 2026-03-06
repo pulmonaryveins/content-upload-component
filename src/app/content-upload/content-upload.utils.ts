@@ -1,6 +1,8 @@
 import {
   ALLOWED_MIME_TYPES,
   FILENAME_INVALID_CHARS_REGEX,
+  MAX_FILE_SIZE_IMAGE,
+  MAX_FILE_SIZE_VIDEO,
   MIME_TO_LABEL,
 } from './content-upload.constants';
 import type { DuplicateInfo, UploadFile, ValidationError } from './content-upload.types';
@@ -27,6 +29,39 @@ export function validateFile(file: File): Omit<ValidationError, 'fileId'> | null
       filename: file.name,
       type: 'special-chars',
       message: `File names cannot contain special characters including spaces and parenthesis`,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Validates a Google Drive file (no local File blob) against type and size rules.
+ * Skips the special-chars check — GDrive filenames may contain spaces; user can rename.
+ * Returns a ValidationError (without fileId) if invalid, null if valid.
+ */
+export function validateGDriveFile(
+  mimeType: string,
+  size: number,
+  filename: string,
+): Omit<ValidationError, 'fileId'> | null {
+  if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+    const typeDisplay = mimeType || 'unknown';
+    return {
+      filename,
+      type: 'unsupported-type',
+      message: `File type ${typeDisplay} is not supported. Supported types: PNG, JPEG, JPG, MP4, WEBM`,
+    };
+  }
+
+  const isVideo = mimeType.startsWith('video/');
+  const maxSize = isVideo ? MAX_FILE_SIZE_VIDEO : MAX_FILE_SIZE_IMAGE;
+  if (size > maxSize) {
+    const limitMb = maxSize / (1024 * 1024);
+    return {
+      filename,
+      type: 'file-too-large',
+      message: `File exceeds the ${limitMb} MB limit for ${isVideo ? 'videos' : 'images'}: ${filename}`,
     };
   }
 

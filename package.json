@@ -30,6 +30,7 @@
     "@angular/platform-browser": "^21.1.0",
     "@angular/router": "^21.1.0",
     "@uppy/core": "^5.2.0",
+    "@uppy/google-drive-picker": "^1.1.1",
     "@uppy/transloadit": "^5.5.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
